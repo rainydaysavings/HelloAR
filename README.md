@@ -7,7 +7,7 @@ Project conducted for course at Lund University
 - Hint on how to use the app upon selecting a mesh
 - Plane occlusion (planes do require to be scanned prior to placing an object)
 - Probe lighting based on the real environment
-- Baked shadows to better ground objects them on the scene
+- Baked shadows to better ground objects on the scene
 
 ![alt text](Assets/Screenshots/1.png "CR7 bust on display")
 
@@ -17,10 +17,12 @@ Project conducted for course at Lund University
 
 ### Hint user
 App hints uer to scan environment and then place the object with a tap.
+
 ![alt text](Assets/Screenshots/8.png "App hints uer to scan environment and then place the object with a tap")
 
 ### Scanning in progress
 Detected planes can be visualized with a dot pattern
+
 ![alt text](Assets/Screenshots/9.png "Detected planes can be visualized with a dot pattern")
 
 ### Probe lighting
