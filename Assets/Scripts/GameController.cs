@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -8,23 +6,16 @@ using UnityEngine.SceneManagement;
 /// </summary>
 public class GameController : MonoBehaviour
 {
-    public string prefabSelected; 
+    public string SelectedPrefab { get; private set; }
+    public string ModeSelected { get; private set; }
 
     /// <summary>
     /// Initializes the controller and sets up the initial game state.
     /// </summary>
     void Start()
     {
-        // Initializes the selected prefab based on global game state.
-        prefabSelected = GameState.selectedPrefab;
-    }
-
-    /// <summary>
-    /// Update is called once per frame. Reserved for future use.
-    /// </summary>
-    void Update()
-    {
-        return;
+        ModeSelected = GameState.modeSelected ?? ModeSelected;
+        SelectedPrefab = GameState.selectedPrefab ?? SelectedPrefab;
     }
 
     /// <summary>
@@ -33,6 +24,6 @@ public class GameController : MonoBehaviour
     public void GoBack()
     {
         // Loads the HomeScreen scene.
-        SceneManager.LoadScene("HomeScreen");
+        SceneManager.LoadScene("Home Screen Prefab Selection");
     }
 }

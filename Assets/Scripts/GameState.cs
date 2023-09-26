@@ -12,4 +12,6 @@ public class GameState : MonoBehaviour
     /// This variable is accessible across different scenes and used by GameController to initialize its prefabSelected variable.
     /// </summary>
     public static string selectedPrefab;
+    
+    public static string modeSelected;
 }
