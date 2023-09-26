@@ -14,7 +14,7 @@ namespace UnityEngine.XR.ARFoundation.Samples
     {
         [Tooltip("The width of the texture feathering (in world units).")]
         [SerializeField]
-        float m_FeatheringWidth = 0.2f;
+        float m_FeatheringWidth = 0.8f;
 
         /// <summary>
         /// The width of the texture feathering (in world units).
@@ -28,7 +28,7 @@ namespace UnityEngine.XR.ARFoundation.Samples
         void Awake()
         {
             m_PlaneMeshVisualizer = GetComponent<ARPlaneMeshVisualizer>();
-            m_FeatheredPlaneMaterial = GetComponent<MeshRenderer>().material;
+            m_FeatheredPlaneMaterial = GetComponent<MeshRenderer>().materials[0];
             m_Plane = GetComponent<ARPlane>();
         }
 

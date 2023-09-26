@@ -1,55 +1,87 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using TMPro;
-using Unity.XR.CoreUtils;
 using UnityEngine;
 using UnityEngine.XR.ARFoundation;
 using UnityEngine.XR.ARSubsystems;
 
+/// <summary>
+/// Manages the spawning and interaction of AR objects.
+/// - Allows for spawning an object once, and scale it.
+/// - Disallows further spawns and plane detection, while maintaining existing planes
+/// - Existing planes with different heights may occlude objects (see: OcclusionMaterial in ARFeatheredPlane prefab)
+/// </summary>
 public class SpawnableManager : MonoBehaviour
 {
-    [SerializeField]
-    ARRaycastManager m_RaycastManager;
-    List<ARRaycastHit> m_Hits = new List<ARRaycastHit>();
-    [SerializeField]
-    GameObject spawnablePrefab1;
-    [SerializeField]
-    GameObject spawnablePrefab2;
-    Camera arCam;
-    GameObject spawnedObject;
-    GameObject gameController;
-    ARPlaneManager arPlaneManager;
-    private GameObject tutorialHintText;
-    private bool spawningEnabled = true;
+    [SerializeField] private ARRaycastManager m_RaycastManager;
+    private List<ARRaycastHit> m_Hits = new List<ARRaycastHit>();
+
+    [SerializeField] private GameObject spawnablePrefab1; // CR7 prefab
+    [SerializeField] private GameObject spawnablePrefab2; // The Gun prefab
+
+    private Camera arCam; 
+    private GameObject spawnedObject;
+    private bool disableMovement = false;   // To control wether or not the object should be moved upon TouchPhase.Moved
+    private ARPlaneManager arPlaneManager;
+    private GameObject tutorialHintText;    // Used to remove hint text upon asset spawn
     
-    // Start is called before the first frame update
+    private float initialFingerDistance;    // Allows to compute the scaling factor
+    private Vector3 initialScale;
+
+    /// <summary>
+    /// Resets the AR Environment, so that the modified ARPlaneManager component behaves correctly
+    /// </summary>
+    void Awake()
+    {
+        disableMovement = false;
+        arPlaneManager = GetComponent<ARPlaneManager>();
+        ResetAREnvironment();
+    }
+
+    /// <summary>
+    /// Initializes variables and sets up the AR environment.
+    /// </summary>
     void Start()
     {
-        spawnedObject = null;
         arCam = GameObject.Find("Main Camera").GetComponent<Camera>();
-        gameController = GameObject.Find("GameController");
         tutorialHintText = GameObject.FindWithTag("Tutorial");
-        arPlaneManager = GetComponent<ARPlaneManager>();
-        
-        arPlaneManager.enabled = true;
-        arPlaneManager.planePrefab.GetComponent<MeshRenderer>().materials[0].color = new Color(1.0f,1.0f,1.0f,0.66f);
-        foreach (var plane in arPlaneManager.trackables)
+    }
+
+    /// <summary>
+    /// Handles touch inputs for both single and multi-touch.
+    /// Delegates method call depending on how many touch points are on the touchscreen
+    /// </summary>
+    void Update()
+    {
+        if (Input.touchCount > 1 && spawnedObject)
         {
-            plane.gameObject.GetComponent<MeshRenderer>().materials[0].color = new Color(1.0f,1.0f,1.0f,0.66f);
+            HandleTwoFingerTouch();
+        }
+        else
+        {
+            HandleSingleFingerTouch();
         }
     }
 
-    // Update is called once per frame
-    void Update()
+    /// <summary>
+    /// Makes sure both the arPlaneManager, and trackables are viewable
+    /// SpawnPrefab disables the former, and makes the latter transparent upon object placement 
+    /// </summary>
+    public void ResetAREnvironment()
     {
-        if (!spawningEnabled || Input.touchCount == 0)
-            return;
-        
-        HandleTouch();
+        arPlaneManager.enabled = true;
+        foreach (var plane in arPlaneManager.trackables)
+        {
+            plane.gameObject.GetComponent<MeshRenderer>().materials[0].color = new Color(1.0f, 1.0f, 1.0f, 0.5f);
+        }
     }
-    
-    void HandleTouch()
+
+
+    /// <summary>
+    /// Handles single-finger touch interactions.
+    /// Allows for object movement
+    /// </summary>
+    void HandleSingleFingerTouch()
     {
         if (Input.touchCount == 0) return;
 
@@ -58,88 +90,107 @@ public class SpawnableManager : MonoBehaviour
 
         if (!PerformRaycast(touch.position)) return;
 
-        if (touch.phase == TouchPhase.Began)
+        if (touch.phase == TouchPhase.Began && !spawnedObject)
         {
             HandleTouchBegin(ray);
         }
-        else if (touch.phase == TouchPhase.Moved)
+        else if (touch.phase == TouchPhase.Moved && spawnedObject)
         {
             HandleTouchMove();
-        }
-        else if (touch.phase == TouchPhase.Ended)
+        } 
+        else if (touch.phase == TouchPhase.Ended && spawnedObject)
         {
-            HandleTouchEnd();
+            disableMovement = true;
+        }
+    }
+    
+    /// <summary>
+    /// Handles two-finger touch for scaling objects.
+    /// </summary>
+    void HandleTwoFingerTouch()
+    {
+        Touch touch1 = Input.GetTouch(0);
+        Touch touch2 = Input.GetTouch(1);
+
+        if (touch1.phase == TouchPhase.Began || touch2.phase == TouchPhase.Began)
+        {
+            initialFingerDistance = Vector2.Distance(touch1.position, touch2.position);
+            initialScale = spawnedObject.transform.localScale;
+        }
+        else if (touch1.phase == TouchPhase.Moved || touch2.phase == TouchPhase.Moved)
+        {
+            float currentFingerDistance = Vector2.Distance(touch1.position, touch2.position);
+            float scaleFactor = currentFingerDistance / initialFingerDistance;
+            spawnedObject.transform.localScale = initialScale * scaleFactor;
         }
     }
 
+    /// <summary>
+    /// Performs raycast to detect AR planes.
+    /// </summary>
+    /// <param name="touchPosition">The 2D position of the touch.</param>
+    /// <returns>True if a hit is found, otherwise false.</returns>
     bool PerformRaycast(Vector2 touchPosition)
     {
         return m_RaycastManager.Raycast(touchPosition, m_Hits, TrackableType.PlaneWithinPolygon);
     }
 
+    /// <summary>
+    /// Handles the start of a touch event.
+    /// </summary>
+    /// <param name="ray">Ray from the camera to the touch point.</param>
     void HandleTouchBegin(Ray ray)
     {
-        RaycastHit hit;
-        if (Physics.Raycast(ray, out hit))
-        {
-            if (hit.collider.gameObject.CompareTag("Spawnable"))
-            {
-                spawnedObject = hit.collider.gameObject;
-                return;
-            }
-        }
-
         Pose hitPose = m_Hits[0].pose;
-        if (arPlaneManager.GetPlane(m_Hits[0].trackableId).alignment == PlaneAlignment.HorizontalUp)
-        {
-            SpawnPrefab(hitPose.position, GetHorizontalUpRotation(hitPose.position));
-        }
-        else
-        {
-            SpawnPrefab(hitPose.position, hitPose.rotation);
-        }
+        SpawnPrefab(hitPose.position, GetHorizontalUpRotation(hitPose.position));
     }
 
+    /// <summary>
+    /// Calculates rotation to align object with the horizontal plane.
+    /// </summary>
+    /// <param name="position">The 3D position for rotation calculation.</param>
+    /// <returns>The calculated rotation.</returns>
     Quaternion GetHorizontalUpRotation(Vector3 position)
     {
         Vector3 direction = arCam.transform.position - position;
-        direction.y = 0;  // Constrain rotation to Y-axis
+        direction.y = 0;
         return Quaternion.LookRotation(direction);
     }
 
+    /// <summary>
+    /// Handles object movement during a touch event.
+    /// Movement is disabled upon first touch has ended, we need to check for that.
+    /// </summary>
     void HandleTouchMove()
     {
-        if (spawnedObject == null) return;
-        spawnedObject.transform.position = m_Hits[0].pose.position;
-        spawnedObject.transform.rotation = m_Hits[0].pose.rotation;
+        if (!disableMovement)
+        {
+            spawnedObject.transform.position = m_Hits[0].pose.position;
+            spawnedObject.transform.rotation = GetHorizontalUpRotation(m_Hits[0].pose.position);
+        }
     }
 
-    void HandleTouchEnd()
-    {
-        spawnedObject = null;
-    }
-
+    /// <summary>
+    /// Instantiates a prefab at a given position and rotation.
+    /// arPlaneManager is disabled to prevent existing planes from changing position.
+    /// arPlaneManager's planes' material at index 0 is made invisible to impede any distraction from the experience
+    /// </summary>
+    /// <param name="spawnPosition">The 3D position to spawn the prefab.</param>
+    /// <param name="rotation">The rotation for the spawned object.</param>
     private void SpawnPrefab(Vector3 spawnPosition, Quaternion rotation)
     {
-        // Select the required mesh
         if (GameState.selectedPrefab.Equals("Cristiano Ronaldo"))
         {
-            spawnedObject = Instantiate(spawnablePrefab1, spawnPosition, Quaternion.identity);
-            spawnedObject.transform.rotation = rotation;
+            spawnedObject = Instantiate(spawnablePrefab1, spawnPosition, rotation);
         }
         else
         {
-            spawnedObject = Instantiate(spawnablePrefab2, spawnPosition, Quaternion.identity);
-            spawnedObject.transform.rotation = rotation;
+            spawnedObject = Instantiate(spawnablePrefab2, spawnPosition, rotation);
         }
-        
-        // We think the player understands now...
+
         GameObject.Destroy(tutorialHintText);
-        
-        // Prevent further spawns
-        spawningEnabled = false;
+
         arPlaneManager.enabled = false;
-        arPlaneManager.planePrefab.GetComponent<MeshRenderer>().materials[0].color = Color.clear;
         foreach (var plane in arPlaneManager.trackables)
         {
             plane.gameObject.GetComponent<MeshRenderer>().materials[0].color = Color.clear;
