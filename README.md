@@ -2,14 +2,15 @@
 Project conducted for course at Lund University
 
 ## Features
-- Main menu that you can return to
-- Object selection
-- Hint on how to use the app upon selecting a mesh
+- Menu for both object and mode selection
+- Marker Detection mode with dynamic loading of referenced images
+- Plane Detection mode to be able to place objects freely
+- Hints on how to use the app upon selecting a mesh
 - Plane occlusion (planes do require to be scanned prior to placing an object)
-- Probe lighting based on the real environment
 - Baked shadows to better ground objects on the scene
 - Move the object while maintaining rotation towards the player
 - Scale object after it has been placed
+- Marker Detection mode also allows for object rotation
 
 ![alt text](Assets/Screenshots/1.png "CR7 bust on display")
 
