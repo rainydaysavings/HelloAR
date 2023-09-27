@@ -14,7 +14,6 @@ GameObject:
   - component: {fileID: 1023574360276927774}
   - component: {fileID: 1092987457804695539}
   - component: {fileID: 7153315541523230230}
-  - component: {fileID: 3389291698217770990}
   m_Layer: 0
   m_Name: ARFeatheredPlane
   m_TagString: Untagged
@@ -138,16 +137,3 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!114 &3389291698217770990
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 323674875929779786}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 16bc20d700d706191bf15fb924a3e58a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_FeatheringWidth: 0.8

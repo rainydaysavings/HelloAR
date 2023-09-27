@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.Serialization;
@@ -16,34 +17,38 @@ using UnityEngine.XR.ARSubsystems;
 [RequireComponent(typeof(ARRaycastManager))]
 public class SpawnableManager : MonoBehaviour
 {
-    [SerializeField] private GameObject spawnablePrefab1;
-    [SerializeField] private GameObject spawnablePrefab2;
-    
-    private const string CristianoRonaldo = "Cristiano Ronaldo";
+    private const string CristianoRonaldoString = "Cristiano Ronaldo";
     private const float MinFingerDistance = 0.1f; // Add a minimum distance to prevent accidental scale
+
+    private GameObject _CristianoRonaldo;
+    private GameObject _Gun;
     
     private readonly List<ARRaycastHit> mHits = new();
-    private ARRaycastManager arRaycastManager;
-    private Camera arCam;
-    private ARPlaneManager arPlaneManager;
+    private GameObject _instantiatedPrefab;
+    private Camera _arCamera;
+    private ARTrackedImageManager _TrackedImageManager;
+    private ARPlaneManager _PlaneManager;
+    private ARRaycastManager _RaycastManager;
     private bool disableMovement; // To control wether or not the object should be moved upon TouchPhase.Moved
 
     private float initialFingerDistance; // Allows to compute the scaling factor
     private Vector3 initialScale;
-    private GameObject spawnedObject;
+    private GameObject prefabToSpawn;
     private GameObject tutorialHintText; // Used to remove hint text upon asset spawn
-    
-    /// <summary>
-    ///     Resets the AR Environment, so that the modified ARPlaneManager component behaves correctly
-    /// </summary>
+
     private void Awake()
     {
-        arCam = GameObject.Find("Main Camera").GetComponent<Camera>() ?? throw new ArgumentNullException("Main Camera not found");
-        arRaycastManager = GetComponent<ARRaycastManager>() ?? throw new ArgumentNullException("ARRaycastManager not found");
-        arPlaneManager = GetComponent<ARPlaneManager>() ?? throw new ArgumentNullException("ARPlaneManager not found");
+        _RaycastManager = GetComponent<ARRaycastManager>() ?? throw new ArgumentNullException("ARRaycastManager not found");
+        _PlaneManager = GetComponent<ARPlaneManager>() ?? throw new ArgumentNullException("ARPlaneManager not found");
+        
+        _PlaneManager.enabled = true;
+        _RaycastManager.enabled = true;
+        
+        _arCamera = GameObject.Find("Main Camera").GetComponent<Camera>() ?? throw new ArgumentNullException("Main Camera not found");
+        _CristianoRonaldo = Resources.Load("Prefabs/CristianoRonaldoBust") as GameObject;
+        _Gun = Resources.Load("Prefabs/Gun") as GameObject;
+        
         tutorialHintText = GameObject.FindWithTag("Tutorial") ?? throw new ArgumentNullException("Tutorial not found");
-        disableMovement = false;
-        ResetAREnvironment();
     }
 
     /// <summary>
@@ -51,9 +56,8 @@ public class SpawnableManager : MonoBehaviour
     /// </summary>
     private void Start()
     {
-        arCam = GameObject.Find("Main Camera").GetComponent<Camera>();
-        arRaycastManager = GameObject.Find("XR Origin").GetComponent<ARRaycastManager>();
-        tutorialHintText = GameObject.FindWithTag("Tutorial");
+        prefabToSpawn = GameState.selectedPrefab.Equals(CristianoRonaldoString) ? _CristianoRonaldo : _Gun;
+        ResetAREnvironment();
     }
 
     /// <summary>
@@ -62,37 +66,33 @@ public class SpawnableManager : MonoBehaviour
     /// </summary>
     private void Update()
     {
-        if (Input.touchCount > 1 && spawnedObject)
+        if (Input.touchCount > 1 && _instantiatedPrefab)
             HandleTwoFingerTouch();
         else
             HandleSingleFingerTouch();
     }
-    
-    /// <summary>
-    ///     Making sure previously instanced prefabs are utterly destroyed before instancing one again
-    /// </summary>
-    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+
+    private void OnEnable()
     {
-        OnDestroyPrefab();
+        SceneManager.sceneLoaded += OnSceneLoaded;
     }
-    
+
     /// <summary>
     ///     Broadcast the scene has been disabled
     /// </summary>
     private void OnDisable()
     {
         SceneManager.sceneLoaded -= OnSceneLoaded;
+        _PlaneManager.enabled = false;
+        _RaycastManager.enabled = false;
     }
 
     /// <summary>
-    ///     Only destroy what has been created...
+    ///     Broadcast the scene has been loaded
     /// </summary>
-    private void OnDestroyPrefab()
+    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        if (spawnedObject != null)
-        {
-            Destroy(spawnedObject);
-        }
+        SceneManager.sceneLoaded += OnSceneLoaded;
     }
 
     /// <summary>
@@ -101,9 +101,9 @@ public class SpawnableManager : MonoBehaviour
     /// </summary>
     public void ResetAREnvironment()
     {
-        arPlaneManager.enabled = true;
-        foreach (var plane in arPlaneManager.trackables)
-            plane.gameObject.GetComponent<MeshRenderer>().materials[0].color = new Color(1.0f, 1.0f, 1.0f, 0.5f);
+        disableMovement = false;
+        _PlaneManager.enabled = true;
+        tutorialHintText.GetComponent<TextMeshProUGUI>().enabled = true;
     }
 
 
@@ -116,26 +116,24 @@ public class SpawnableManager : MonoBehaviour
         if (Input.touchCount == 0) return;
 
         var touch = Input.GetTouch(0);
-        var ray = arCam.ScreenPointToRay(touch.position);
+        var ray = _arCamera.ScreenPointToRay(touch.position);
         if (!PerformRaycast(touch.position)) return;
 
         switch (touch.phase)
         {
-            case TouchPhase.Began when !spawnedObject:
+            case TouchPhase.Began when !_instantiatedPrefab:
                 HandleTouchBegin(ray);
                 break;
-            case TouchPhase.Moved when spawnedObject:
+            case TouchPhase.Moved when _instantiatedPrefab:
                 HandleTouchMove();
                 break;
-            case TouchPhase.Ended when spawnedObject:
+            case TouchPhase.Ended when _instantiatedPrefab:
                 disableMovement = true;
                 break;
             case TouchPhase.Stationary:
                 break;
             case TouchPhase.Canceled:
                 break;
-            default:
-                throw new ArgumentOutOfRangeException();
         }
     }
 
@@ -146,20 +144,20 @@ public class SpawnableManager : MonoBehaviour
     {
         var touch1 = Input.GetTouch(0);
         var touch2 = Input.GetTouch(1);
-        
+
         var currentFingerDistance = Vector2.Distance(touch1.position, touch2.position);
         if (currentFingerDistance < MinFingerDistance) return; // Prevent accidental scale
-        
+
         if (touch1.phase == TouchPhase.Began || touch2.phase == TouchPhase.Began)
         {
             initialFingerDistance = Vector2.Distance(touch1.position, touch2.position);
-            initialScale = spawnedObject.transform.localScale;
+            initialScale = _instantiatedPrefab.transform.localScale;
         }
-        else if (touch1.phase == TouchPhase.Moved || touch2.phase == TouchPhase.Moved)
+        else if ((touch1.phase == TouchPhase.Moved || touch2.phase == TouchPhase.Moved) && _instantiatedPrefab.transform.localScale.magnitude > 0.1f)
         {
             currentFingerDistance = Vector2.Distance(touch1.position, touch2.position);
             var scaleFactor = currentFingerDistance / initialFingerDistance;
-            spawnedObject.transform.localScale = initialScale * scaleFactor;
+            _instantiatedPrefab.transform.localScale = initialScale * scaleFactor;
         }
     }
 
@@ -170,7 +168,7 @@ public class SpawnableManager : MonoBehaviour
     /// <returns>True if a hit is found, otherwise false.</returns>
     private bool PerformRaycast(Vector2 touchPosition)
     {
-        return arRaycastManager.Raycast(touchPosition, mHits, TrackableType.PlaneWithinPolygon);
+        return _RaycastManager.Raycast(touchPosition, mHits, TrackableType.PlaneWithinPolygon);
     }
 
     /// <summary>
@@ -190,7 +188,7 @@ public class SpawnableManager : MonoBehaviour
     /// <returns>The calculated rotation.</returns>
     private Quaternion GetHorizontalUpRotation(Vector3 position)
     {
-        var direction = arCam.transform.position - position;
+        var direction = _arCamera.transform.position - position;
         direction.y = 0;
         return Quaternion.LookRotation(direction);
     }
@@ -203,8 +201,8 @@ public class SpawnableManager : MonoBehaviour
     {
         if (!disableMovement)
         {
-            spawnedObject.transform.position = mHits[0].pose.position;
-            spawnedObject.transform.rotation = GetHorizontalUpRotation(mHits[0].pose.position);
+            _instantiatedPrefab.transform.position = mHits[0].pose.position;
+            _instantiatedPrefab.transform.rotation = GetHorizontalUpRotation(mHits[0].pose.position);
         }
     }
 
@@ -217,12 +215,14 @@ public class SpawnableManager : MonoBehaviour
     /// <param name="rotation">The rotation for the spawned object.</param>
     private void SpawnPrefab(Vector3 spawnPosition, Quaternion rotation)
     {
-        spawnedObject = Instantiate(GameState.selectedPrefab.Equals("Cristiano Ronaldo") ? spawnablePrefab1 : spawnablePrefab2, spawnPosition, rotation);
+        // Make sure we only have one instance of the object
+        _instantiatedPrefab = Instantiate(prefabToSpawn, spawnPosition, rotation);
 
-        Destroy(tutorialHintText);
+        // Disable hint, given the player knows how to do it
+        tutorialHintText.GetComponent<TextMeshProUGUI>().enabled = false;
 
-        arPlaneManager.enabled = false;
-        foreach (var plane in arPlaneManager.trackables)
+        _PlaneManager.enabled = false;
+        foreach (var plane in _PlaneManager.trackables)
             plane.gameObject.GetComponent<MeshRenderer>().materials[0].color = Color.clear;
     }
 }

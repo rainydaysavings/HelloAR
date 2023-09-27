@@ -6,6 +6,7 @@ TagManager:
   tags:
   - Spawnable
   - Tutorial
+  - TutorialMove
   layers:
   - Default
   - TransparentFX

@@ -9,40 +9,54 @@ using UnityEngine.XR.ARSubsystems;
 [RequireComponent(typeof(ARTrackedImageManager))]
 public class MarkerController : MonoBehaviour
 {
-    [SerializeField] private GameObject spawnablePrefab1;
-    [SerializeField] private GameObject spawnablePrefab2;
-
-    private const string CristianoRonaldo = "Cristiano Ronaldo";
+    private const string CristianoRonaldoString = "Cristiano Ronaldo";
+    private const string GunString = "Gun";
     private const float MinFingerDistance = 0.1f; // Add a minimum distance to prevent accidental scale
 
-    private ARTrackedImageManager m_TrackedImageManager;
-    private Camera arCamera;
-    private bool allowSpawm;
-    private GameObject prefabToSpawn;
+    private ARTrackedImageManager _TrackedImageManager;
+    private Camera _arCamera;
+
+    private GameObject _CristianoRonaldo;
+    private GameObject _Gun;
     private GameObject _instantiatedPrefab;
-    private Vector3 position;
-    private Quaternion rotation;
-    
-    private Vector2 touchStartPos;
-    private Vector2 touchEndPos;
+    private XRReferenceImageLibrary _referenceImageLibrary;
+
+    private readonly float settleTime = 1.0f;
+    private bool allowSpawn;
     private float initialFingerDistance;
     private Vector3 initialScale;
+    private Vector3 latestScale;
     private Vector2 lastTouchPosition;
-    private bool rotating = false;
-    private float settleTime = 1.0f;
-    
+    private Vector3 position;
+    private GameObject prefabToSpawn;
+    private bool objectSpawned;
+    private bool rotating;
+    private Quaternion rotation;
+    private Vector2 touchEndPos;
+    private Vector2 touchStartPos;
+
     private void Awake()
     {
-        arCamera = GameObject.Find("Main Camera").GetComponent<Camera>() ?? throw new ArgumentNullException("Main Camera not found");
-        m_TrackedImageManager = GetComponent<ARTrackedImageManager>() ?? throw new ArgumentNullException("ARTrackedImageManager not found");
-        allowSpawm = true;
+        _arCamera = GameObject.Find("Main Camera").GetComponent<Camera>() ?? throw new ArgumentNullException("Main Camera not found");
+
+        _referenceImageLibrary = Resources.Load("ReferenceImageLibrary") as XRReferenceImageLibrary;
+        _TrackedImageManager = GetComponent<ARTrackedImageManager>() ?? throw new ArgumentNullException("ARTrackedImageManager not found");
+        _TrackedImageManager.referenceLibrary = _referenceImageLibrary;
+        _TrackedImageManager.enabled = true;
+
+        _CristianoRonaldo = Resources.Load("Prefabs/CristianoRonaldoBust") as GameObject;
+        _Gun = Resources.Load("Prefabs/Gun") as GameObject;
     }
 
     private void Start()
     {
-        prefabToSpawn = GameState.selectedPrefab.Equals(CristianoRonaldo) ? spawnablePrefab1 : spawnablePrefab2;
+        prefabToSpawn = GameState.selectedPrefab.Equals(CristianoRonaldoString) ? _CristianoRonaldo : _Gun;
+        _Gun = Resources.Load("Prefabs/Gun") as GameObject;
+        allowSpawn = true;
+        objectSpawned = false;
+        latestScale = new Vector3(1.0f, 1.0f, 1.0f);
     }
-    
+
     private void Update()
     {
         if (_instantiatedPrefab && Input.touchCount == 2) // Scaling
@@ -52,7 +66,7 @@ public class MarkerController : MonoBehaviour
 
             var currentFingerDistance = Vector2.Distance(touch1.position, touch2.position);
             if (currentFingerDistance < MinFingerDistance) return; // Prevent accidental scale
-        
+
             if (touch1.phase == TouchPhase.Began || touch2.phase == TouchPhase.Began)
             {
                 initialFingerDistance = Vector2.Distance(touch1.position, touch2.position);
@@ -61,12 +75,17 @@ public class MarkerController : MonoBehaviour
             else if (touch1.phase == TouchPhase.Moved || touch2.phase == TouchPhase.Moved)
             {
                 var scaleFactor = currentFingerDistance / initialFingerDistance;
-                _instantiatedPrefab.transform.localScale = initialScale * scaleFactor;
+                var potentiallyResultingScale = initialScale * scaleFactor;
+                if (potentiallyResultingScale.x > 0.25)
+                {
+                    latestScale = initialScale * scaleFactor;
+                    _instantiatedPrefab.transform.localScale = initialScale * scaleFactor;
+                }
             }
         }
         else if (_instantiatedPrefab && Input.touchCount == 1) // Rotation
         {
-            Touch touch = Input.GetTouch(0);
+            var touch = Input.GetTouch(0);
 
             if (touch.phase == TouchPhase.Began)
             {
@@ -75,10 +94,10 @@ public class MarkerController : MonoBehaviour
             }
             else if (touch.phase == TouchPhase.Moved && rotating)
             {
-                Vector2 newTouchPosition = touch.position;
-                Vector2 delta = newTouchPosition - lastTouchPosition;
+                var newTouchPosition = touch.position;
+                var delta = newTouchPosition - lastTouchPosition;
 
-                float rotationAmount = delta.x * 0.2f; // Adjust the multiplier for sensitivity
+                var rotationAmount = delta.x * 0.25f;
                 _instantiatedPrefab.transform.Rotate(Vector3.up, -rotationAmount);
 
                 lastTouchPosition = newTouchPosition;
@@ -90,75 +109,72 @@ public class MarkerController : MonoBehaviour
         }
     }
 
-    void OnEnable()
+    private void OnEnable()
     {
-        SceneManager.sceneLoaded += OnSceneLoaded;
-        m_TrackedImageManager.trackedImagesChanged += OnTrackedImagesChanged;
+        SceneManager.sceneLoaded += OnSceneLoaded; // Subscribe
+        _TrackedImageManager.trackedImagesChanged += OnTrackedImagesChanged;
+        _TrackedImageManager.enabled = true;
     }
 
-    void OnDisable()
+    private void OnDisable()
     {
-        SceneManager.sceneLoaded -= OnSceneLoaded;
-        m_TrackedImageManager.trackedImagesChanged -= OnTrackedImagesChanged;
+        SceneManager.sceneLoaded -= OnSceneLoaded; // Unsubscribe
+        _TrackedImageManager.trackedImagesChanged -= OnTrackedImagesChanged;
+        _TrackedImageManager.enabled = false;
     }
-    
-    void OnTrackedImagesChanged(ARTrackedImagesChangedEventArgs eventArgs)
-    {
-        foreach (ARTrackedImage trackedImg in eventArgs.added.Concat(eventArgs.updated))
-        {
-            switch (trackedImg.trackingState)
-            {
-                case TrackingState.Tracking when !allowSpawm:
-                    continue;
-                case TrackingState.Tracking:
-                    allowSpawm = false;
-                    StartCoroutine(PlaceObjectAfterDelay(trackedImg.transform.position));
-                    break;
-                case TrackingState.Limited:
-                    position = trackedImg.transform.position;
-                    rotation = GetRotationTowardsPlayer(position);
-                    prefabToSpawn.transform.position = position;
-                    prefabToSpawn.transform.rotation = rotation;
-                    break;
-                case TrackingState.None:
-                    if (_instantiatedPrefab) Destroy(_instantiatedPrefab);;
-                    allowSpawm = true;
-                    break;
-                default:
-                {
-                    if (_instantiatedPrefab) Destroy(_instantiatedPrefab);;
-                    allowSpawm = true;
-                    break;
-                }
-            }
-        }
-    }
-    
-    private IEnumerator PlaceObjectAfterDelay(Vector3 position)
-    {
-        yield return new WaitForSeconds(settleTime);
-        rotation = GetRotationTowardsPlayer(position);
-        _instantiatedPrefab = Instantiate(prefabToSpawn, position, rotation);
-    }
-    
+
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        OnDestroyPrefab();
+        // Reset your state variables here
+        allowSpawn = true;
+        objectSpawned = false;
     }
 
-    private void OnDestroyPrefab()
+    private void OnTrackedImagesChanged(ARTrackedImagesChangedEventArgs eventArgs)
     {
-        if (_instantiatedPrefab != null)
+        foreach (var trackedImg in eventArgs.added.Concat(eventArgs.updated))
+            switch (trackedImg.trackingState)
+            {
+                case TrackingState.Tracking when !allowSpawn:
+                    continue;
+                case TrackingState.Tracking:
+                    allowSpawn = false;
+                    StartCoroutine(PlaceObjectAfterDelay(trackedImg.transform));
+                    break;
+                case TrackingState.Limited: // Only update position
+                    StartCoroutine(PlaceObjectAfterDelay(trackedImg.transform));
+                    break;
+                case TrackingState.None:
+                    allowSpawn = true;
+                    break;
+                default:
+                    allowSpawn = true;
+                    break;
+            }
+    }
+
+    private IEnumerator PlaceObjectAfterDelay(Transform transform)
+    {
+        yield return new WaitForSeconds(settleTime);
+        
+        rotation = GetRotation(transform);
+
+        if (objectSpawned) // Only update position, tracking is limited, perhaps
         {
-            Destroy(_instantiatedPrefab);
+            _instantiatedPrefab.transform.position = transform.position;
+            _instantiatedPrefab.transform.localScale = latestScale;
+        }
+        else
+        {
+            _instantiatedPrefab = Instantiate(prefabToSpawn, transform.position, rotation);
+            objectSpawned = true;
         }
     }
 
-    private Quaternion GetRotationTowardsPlayer(Vector3 trackedPosition)
+    private Quaternion GetRotation(Transform transform)
     {
-        var toCamera = arCamera.transform.position - trackedPosition;
+        var toCamera = _arCamera.transform.position - transform.position;
         toCamera.y = 0; // Zero out the y-component to ignore height differences
         return Quaternion.LookRotation(toCamera);
     }
-
 }

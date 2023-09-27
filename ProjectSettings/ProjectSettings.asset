@@ -138,15 +138,7 @@ PlayerSettings:
   vulkanEnableCommandBufferRecycling: 1
   loadStoreDebugModeEnabled: 0
   bundleVersion: 0.1
-  preloadedAssets:
-  - {fileID: -5849904644347260942, guid: 74ba0db822aed9b4fb95f768822dcc02, type: 2}
-  - {fileID: 11400000, guid: 0aed81ab7ad07cc0aaf2b83f71a77745, type: 2}
-  - {fileID: 11400000, guid: 309c15b56cd1e993095744b19ad52bb4, type: 2}
-  - {fileID: 11400000, guid: 3e8d863a5dab5cb5499753a5e6665fc5, type: 2}
-  - {fileID: 11400000, guid: a3b003d42630963d08490f39270812b1, type: 2}
-  - {fileID: -5301493379544543252, guid: f211bb81c05455da5b6eb0875bd74717, type: 2}
-  - {fileID: 4800000, guid: c9f956787b1d945e7b36e0516201fc76, type: 3}
-  - {fileID: 4800000, guid: 0945859e5a1034c2cb6dce53cb4fb899, type: 3}
+  preloadedAssets: []
   metroInputSource: 0
   wsaTransparentSwapchain: 0
   m_HolographicPauseOnTrackingLoss: 1
@@ -277,7 +269,7 @@ PlayerSettings:
   AndroidEnableTango: 0
   androidEnableBanner: 1
   androidUseLowAccuracyLocation: 0
-  androidUseCustomKeystore: 1
+  androidUseCustomKeystore: 0
   m_AndroidBanners:
   - width: 320
     height: 180
