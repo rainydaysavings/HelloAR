@@ -6,7 +6,9 @@ TagManager:
   tags:
   - Spawnable
   - Tutorial
-  - TutorialMove
+  - ARSessionOrigin
+  - ARPlanePrefab
+  - PlaneSetupManager
   layers:
   - Default
   - TransparentFX

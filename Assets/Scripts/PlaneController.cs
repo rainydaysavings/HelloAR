@@ -29,26 +29,31 @@ public class SpawnableManager : MonoBehaviour
     private ARTrackedImageManager _TrackedImageManager;
     private ARPlaneManager _PlaneManager;
     private ARRaycastManager _RaycastManager;
+    private GameObject _arPlane;
+    private GameObject PlaneSetupManager;
+    private Material occlusionMaterial;
+    private Material planeMaterial;
     private bool disableMovement; // To control wether or not the object should be moved upon TouchPhase.Moved
 
     private float initialFingerDistance; // Allows to compute the scaling factor
     private Vector3 initialScale;
     private GameObject prefabToSpawn;
     private GameObject tutorialHintText; // Used to remove hint text upon asset spawn
-
+    
     private void Awake()
     {
         _RaycastManager = GetComponent<ARRaycastManager>() ?? throw new ArgumentNullException("ARRaycastManager not found");
         _PlaneManager = GetComponent<ARPlaneManager>() ?? throw new ArgumentNullException("ARPlaneManager not found");
+        _arPlane = _PlaneManager.planePrefab;
         
-        _PlaneManager.enabled = true;
-        _RaycastManager.enabled = true;
+        occlusionMaterial = Resources.Load("OcclusionMaterial") as Material;
+        planeMaterial = Resources.Load("PlaneMat") as Material;
+        
+        tutorialHintText = GameObject.FindWithTag("Tutorial") ?? throw new ArgumentNullException("Tutorial not found");
         
         _arCamera = GameObject.Find("Main Camera").GetComponent<Camera>() ?? throw new ArgumentNullException("Main Camera not found");
         _CristianoRonaldo = Resources.Load("Prefabs/CristianoRonaldoBust") as GameObject;
         _Gun = Resources.Load("Prefabs/Gun") as GameObject;
-        
-        tutorialHintText = GameObject.FindWithTag("Tutorial") ?? throw new ArgumentNullException("Tutorial not found");
     }
 
     /// <summary>
@@ -103,9 +108,28 @@ public class SpawnableManager : MonoBehaviour
     {
         disableMovement = false;
         _PlaneManager.enabled = true;
+        _RaycastManager.enabled = true;
         tutorialHintText.GetComponent<TextMeshProUGUI>().enabled = true;
+        SetPlaneMaterial();
     }
 
+    public void SetOcclusionMaterial()
+    {
+        _arPlane.GetComponent<MeshRenderer>().material = occlusionMaterial;
+        foreach (var plane in _PlaneManager.trackables)
+        {
+            plane.GetComponent<MeshRenderer>().material = occlusionMaterial;
+        }
+    }
+    
+    public void SetPlaneMaterial()
+    {
+        _arPlane.GetComponent<MeshRenderer>().material = planeMaterial;
+        foreach (var plane in _PlaneManager.trackables)
+        {
+            plane.GetComponent<MeshRenderer>().material = planeMaterial;
+        }
+    }
 
     /// <summary>
     ///     Handles single-finger touch interactions.
@@ -221,8 +245,7 @@ public class SpawnableManager : MonoBehaviour
         // Disable hint, given the player knows how to do it
         tutorialHintText.GetComponent<TextMeshProUGUI>().enabled = false;
 
-        _PlaneManager.enabled = false;
-        foreach (var plane in _PlaneManager.trackables)
-            plane.gameObject.GetComponent<MeshRenderer>().materials[0].color = Color.clear;
+        // Change plane material
+        SetOcclusionMaterial();
     }
 }
