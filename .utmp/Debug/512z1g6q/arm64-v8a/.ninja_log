@@ -1,0 +1,3 @@
+# ninja log v5
+0	38	1695920503201673444	FramePacing/CMakeFiles/swappywrapper.dir/UnitySwappyWrapper.cpp.o	3e6c371829701edc
+38	61	1695920503225673731	/home/eliam/Projects/HelloAR/Library/Bee/Android/Prj/IL2CPP/Gradle/unityLibrary/build/intermediates/cxx/Debug/512z1g6q/obj/arm64-v8a/libswappywrapper.so	fef894b3dac4fdec

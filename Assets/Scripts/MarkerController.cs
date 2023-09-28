@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -9,52 +10,46 @@ using UnityEngine.XR.ARSubsystems;
 [RequireComponent(typeof(ARTrackedImageManager))]
 public class MarkerController : MonoBehaviour
 {
-    private const string CristianoRonaldoString = "Cristiano Ronaldo";
-    private const string GunString = "Gun";
-    private const float MinFingerDistance = 0.1f; // Add a minimum distance to prevent accidental scale
+    [SerializeField] private string _CristianoRonaldoString = "Cristiano Ronaldo";
+    [SerializeField] private float _MinFingerDistance = 0.1f;
+    [SerializeField] private float _settleTime = 1.0f;
+    
+    [SerializeField] private GameObject _instantiatedPrefab;
+    [SerializeField] private bool _allowSpawn;
+    [SerializeField] private bool _objectSpawned;
+    [SerializeField] private bool _rotating;
 
-    private ARTrackedImageManager _TrackedImageManager;
-    private Camera _arCamera;
+    [SerializeField] private float _initialFingerDistance;
+    [SerializeField] private Vector3 _initialScale;
+    [SerializeField] private Vector2 _lastTouchPosition;
+    [SerializeField] private Vector3 _latestScale;
+    [SerializeField] private Vector3 _position;
+    [SerializeField] private GameObject _prefabToSpawn;
+    [SerializeField] private Quaternion _rotation;
+    [SerializeField] private Vector2 _touchEndPos;
+    [SerializeField] private Vector2 _touchStartPos;
 
-    private GameObject _CristianoRonaldo;
-    private GameObject _Gun;
-    private GameObject _instantiatedPrefab;
-    private XRReferenceImageLibrary _referenceImageLibrary;
+    [SerializeField] private Camera _arCamera;
+    [SerializeField] private XRReferenceImageLibrary _referenceImageLibrary = null;
+    [SerializeField] private ARTrackedImageManager _TrackedImageManager = null;
 
-    private readonly float settleTime = 1.0f;
-    private bool allowSpawn;
-    private float initialFingerDistance;
-    private Vector3 initialScale;
-    private Vector3 latestScale;
-    private Vector2 lastTouchPosition;
-    private Vector3 position;
-    private GameObject prefabToSpawn;
-    private bool objectSpawned;
-    private bool rotating;
-    private Quaternion rotation;
-    private Vector2 touchEndPos;
-    private Vector2 touchStartPos;
-
+    [SerializeField] private List<GameObject> models;
     private void Awake()
     {
-        _arCamera = GameObject.Find("Main Camera").GetComponent<Camera>() ?? throw new ArgumentNullException("Main Camera not found");
-
+        _allowSpawn = true;
+        _objectSpawned = false;
+        _rotating = false;
+        _latestScale = new Vector3(1.0f, 1.0f, 1.0f);
+        _position = new Vector3(0.0f, 0.0f, 0.0f);
+        
         _referenceImageLibrary = Resources.Load("ReferenceImageLibrary") as XRReferenceImageLibrary;
-        _TrackedImageManager = GetComponent<ARTrackedImageManager>() ?? throw new ArgumentNullException("ARTrackedImageManager not found");
-        _TrackedImageManager.referenceLibrary = _referenceImageLibrary;
+        _prefabToSpawn = GameState.selectedPrefab.Equals(_CristianoRonaldoString) ? models[0] : models[1];
+        _arCamera = GameObject.Find("Main Camera").GetComponent<Camera>();
+
+        _TrackedImageManager = GetComponent<ARTrackedImageManager>();
+        _TrackedImageManager.enabled = false;
+        _TrackedImageManager.referenceLibrary = _TrackedImageManager.CreateRuntimeLibrary(_referenceImageLibrary);
         _TrackedImageManager.enabled = true;
-
-        _CristianoRonaldo = Resources.Load("Prefabs/CristianoRonaldoBust") as GameObject;
-        _Gun = Resources.Load("Prefabs/Gun") as GameObject;
-    }
-
-    private void Start()
-    {
-        prefabToSpawn = GameState.selectedPrefab.Equals(CristianoRonaldoString) ? _CristianoRonaldo : _Gun;
-        _Gun = Resources.Load("Prefabs/Gun") as GameObject;
-        allowSpawn = true;
-        objectSpawned = false;
-        latestScale = new Vector3(1.0f, 1.0f, 1.0f);
     }
 
     private void Update()
@@ -65,21 +60,21 @@ public class MarkerController : MonoBehaviour
             var touch2 = Input.GetTouch(1);
 
             var currentFingerDistance = Vector2.Distance(touch1.position, touch2.position);
-            if (currentFingerDistance < MinFingerDistance) return; // Prevent accidental scale
+            if (currentFingerDistance < _MinFingerDistance) return; // Prevent accidental scale
 
             if (touch1.phase == TouchPhase.Began || touch2.phase == TouchPhase.Began)
             {
-                initialFingerDistance = Vector2.Distance(touch1.position, touch2.position);
-                initialScale = _instantiatedPrefab.transform.localScale;
+                _initialFingerDistance = Vector2.Distance(touch1.position, touch2.position);
+                _initialScale = _instantiatedPrefab.transform.localScale;
             }
             else if (touch1.phase == TouchPhase.Moved || touch2.phase == TouchPhase.Moved)
             {
-                var scaleFactor = currentFingerDistance / initialFingerDistance;
-                var potentiallyResultingScale = initialScale * scaleFactor;
+                var scaleFactor = currentFingerDistance / _initialFingerDistance;
+                var potentiallyResultingScale = _initialScale * scaleFactor;
                 if (potentiallyResultingScale.x > 0.25)
                 {
-                    latestScale = initialScale * scaleFactor;
-                    _instantiatedPrefab.transform.localScale = initialScale * scaleFactor;
+                    _latestScale = _initialScale * scaleFactor;
+                    _instantiatedPrefab.transform.localScale = _initialScale * scaleFactor;
                 }
             }
         }
@@ -89,85 +84,74 @@ public class MarkerController : MonoBehaviour
 
             if (touch.phase == TouchPhase.Began)
             {
-                lastTouchPosition = touch.position;
-                rotating = true;
+                _lastTouchPosition = touch.position;
+                _rotating = true;
             }
-            else if (touch.phase == TouchPhase.Moved && rotating)
+            else if (touch.phase == TouchPhase.Moved && _rotating)
             {
                 var newTouchPosition = touch.position;
-                var delta = newTouchPosition - lastTouchPosition;
+                var delta = newTouchPosition - _lastTouchPosition;
 
                 var rotationAmount = delta.x * 0.25f;
                 _instantiatedPrefab.transform.Rotate(Vector3.up, -rotationAmount);
 
-                lastTouchPosition = newTouchPosition;
+                _lastTouchPosition = newTouchPosition;
             }
             else if (touch.phase == TouchPhase.Ended)
             {
-                rotating = false;
+                _rotating = false;
             }
         }
     }
-
+    
     private void OnEnable()
     {
-        SceneManager.sceneLoaded += OnSceneLoaded; // Subscribe
         _TrackedImageManager.trackedImagesChanged += OnTrackedImagesChanged;
-        _TrackedImageManager.enabled = true;
     }
 
     private void OnDisable()
     {
-        SceneManager.sceneLoaded -= OnSceneLoaded; // Unsubscribe
         _TrackedImageManager.trackedImagesChanged -= OnTrackedImagesChanged;
-        _TrackedImageManager.enabled = false;
     }
-
-    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
-    {
-        // Reset your state variables here
-        allowSpawn = true;
-        objectSpawned = false;
-    }
-
+    
     private void OnTrackedImagesChanged(ARTrackedImagesChangedEventArgs eventArgs)
     {
         foreach (var trackedImg in eventArgs.added.Concat(eventArgs.updated))
             switch (trackedImg.trackingState)
             {
-                case TrackingState.Tracking when !allowSpawn:
+                case TrackingState.Tracking when !_allowSpawn:
                     continue;
                 case TrackingState.Tracking:
-                    allowSpawn = false;
+                    _allowSpawn = false;
                     StartCoroutine(PlaceObjectAfterDelay(trackedImg.transform));
                     break;
                 case TrackingState.Limited: // Only update position
                     StartCoroutine(PlaceObjectAfterDelay(trackedImg.transform));
                     break;
                 case TrackingState.None:
-                    allowSpawn = true;
+                    _allowSpawn = true;
                     break;
                 default:
-                    allowSpawn = true;
+                    _allowSpawn = true;
                     break;
             }
     }
 
     private IEnumerator PlaceObjectAfterDelay(Transform transform)
     {
-        yield return new WaitForSeconds(settleTime);
-        
-        rotation = GetRotation(transform);
+        yield return new WaitForSeconds(_settleTime);
 
-        if (objectSpawned) // Only update position, tracking is limited, perhaps
+        _rotation = GetRotation(transform);
+
+        if (_objectSpawned) // Only update position, tracking is limited, perhaps
         {
             _instantiatedPrefab.transform.position = transform.position;
-            _instantiatedPrefab.transform.localScale = latestScale;
+            _instantiatedPrefab.transform.localScale = _latestScale;
         }
         else
         {
-            _instantiatedPrefab = Instantiate(prefabToSpawn, transform.position, rotation);
-            objectSpawned = true;
+            _instantiatedPrefab = Instantiate(_prefabToSpawn, transform.position, _rotation);
+            _objectSpawned = true;
         }
     }
 
