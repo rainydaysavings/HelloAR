@@ -88,8 +88,7 @@ public class SpawnableManager : MonoBehaviour
     private void OnDisable()
     {
         SceneManager.sceneLoaded -= OnSceneLoaded;
-        _PlaneManager.enabled = false;
-        _RaycastManager.enabled = false;
+        DestroyImmediate(this);
     }
 
     /// <summary>
@@ -106,11 +105,11 @@ public class SpawnableManager : MonoBehaviour
     /// </summary>
     public void ResetAREnvironment()
     {
+        tutorialHintText.GetComponent<TextMeshProUGUI>().enabled = true;
+        SetPlaneMaterial();
         disableMovement = false;
         _PlaneManager.enabled = true;
         _RaycastManager.enabled = true;
-        tutorialHintText.GetComponent<TextMeshProUGUI>().enabled = true;
-        SetPlaneMaterial();
     }
 
     public void SetOcclusionMaterial()
