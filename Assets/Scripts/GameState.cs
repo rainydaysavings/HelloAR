@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.XR.Management;
 
 /// <summary>
 ///     Manages global game state data.
@@ -14,7 +15,7 @@ public class GameState : MonoBehaviour
     public static string selectedPrefab;
 
     public static string modeSelected;
-    
+
     /// <summary>
     ///     Navigates to the HomeScreen scene.
     /// </summary>

@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ArrayOfTypeDate xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <TypeDate>
+    <guid>de9919161fbca46b79a86ecacee38c30</guid>
+    <fileName>Assets/Scripts/ARFeatheredPlaneMeshVisualizer.cs</fileName>
+    <timeStamp>2023-09-28T16:35:56.5213175+02:00</timeStamp>
+    <typeFullName>
+      <string>ARFeatheredPlaneMeshVisualizer</string>
+    </typeFullName>
+    <assembly>Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null</assembly>
+  </TypeDate>
+  <TypeDate>
+    <guid>788587e994f1943f3856c1c332db429b</guid>
+    <fileName>Assets/Scripts/AnchorCreator.cs</fileName>
+    <timeStamp>2023-09-28T16:35:56.5213175+02:00</timeStamp>
+    <typeFullName>
+      <string>AnchorCreator</string>
+    </typeFullName>
+    <assembly>Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null</assembly>
+  </TypeDate>
+  <TypeDate>
+    <guid>fd14cba8d6e57a97f9aefa36de277199</guid>
+    <fileName>Assets/Scripts/FadePlaneOnBoundaryChange.cs</fileName>
+    <timeStamp>2023-09-28T16:35:56.5213175+02:00</timeStamp>
+    <typeFullName>
+      <string>FadePlaneOnBoundaryChange</string>
+    </typeFullName>
+    <assembly>Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null</assembly>
+  </TypeDate>
+  <TypeDate>
+    <guid>9d5f19706e1a4263eac0a709c9ce00ec</guid>
+    <fileName>Assets/Scripts/GameState.cs</fileName>
+    <timeStamp>2023-09-28T16:35:56.5213175+02:00</timeStamp>
+    <typeFullName>
+      <string>GameState</string>
+    </typeFullName>
+    <assembly>Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null</assembly>
+  </TypeDate>
+  <TypeDate>
+    <guid>30f3c7f48ab577b9ebb3dc43cf4fb597</guid>
+    <fileName>Assets/Scripts/MarkerController.cs</fileName>
+    <timeStamp>2023-09-28T16:41:10.717072+02:00</timeStamp>
+    <typeFullName>
+      <string>MarkerController</string>
+    </typeFullName>
+    <assembly>Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null</assembly>
+  </TypeDate>
+  <TypeDate>
+    <guid>333e57a1f124a89be867b9df73d1063d</guid>
+    <fileName>Assets/Scripts/PlaneController.cs</fileName>
+    <timeStamp>2023-09-28T16:40:28.5765686+02:00</timeStamp>
+    <typeFullName>
+      <string>SpawnableManager</string>
+    </typeFullName>
+    <assembly>Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null</assembly>
+  </TypeDate>
+  <TypeDate>
+    <guid>61c2a6ae7fd4294e5979e97768ae1f3d</guid>
+    <fileName>Assets/Scripts/PlaneMaterialController.cs</fileName>
+    <timeStamp>2023-09-28T16:35:56.5213175+02:00</timeStamp>
+    <typeFullName>
+      <string>PlaneMaterialController</string>
+    </typeFullName>
+    <assembly>Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null</assembly>
+  </TypeDate>
+  <TypeDate>
+    <guid>bc9548dd6411e9712ae9cb85f3d992ce</guid>
+    <fileName>Assets/Scripts/SceneBuilder.cs</fileName>
+    <timeStamp>2023-09-28T16:35:56.5213175+02:00</timeStamp>
+    <typeFullName>
+      <string>SceneBuilder</string>
+    </typeFullName>
+    <assembly>Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null</assembly>
+  </TypeDate>
+  <TypeDate>
+    <guid>f07927b8ac9b651828d1ab726f42734f</guid>
+    <fileName>Assets/Scripts/SceneController.cs</fileName>
+    <timeStamp>2023-09-28T16:35:56.5213175+02:00</timeStamp>
+    <typeFullName>
+      <string>SceneController</string>
+    </typeFullName>
+    <assembly>Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null</assembly>
+  </TypeDate>
+  <TypeDate>
+    <guid>21b937694778bed218c6207be7ab82e4</guid>
+    <fileName>Assets/UnitySweeper/Editor/AssetCollector.cs</fileName>
+    <timeStamp>2022-12-13T19:37:40+01:00</timeStamp>
+    <typeFullName>
+      <string>UnitySweeper.AssetCollector</string>
+    </typeFullName>
+    <assembly>Assembly-CSharp-Editor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null</assembly>
+  </TypeDate>
+  <TypeDate>
+    <guid>2a31984406ce82530aeece199ed4c1a9</guid>
+    <fileName>Assets/UnitySweeper/Editor/AssetReferenceCollection.cs</fileName>
+    <timeStamp>2022-12-13T19:37:40+01:00</timeStamp>
+    <typeFullName>
+      <string>UnitySweeper.AssetReferenceCollection</string>
+    </typeFullName>
+    <assembly>Assembly-CSharp-Editor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null</assembly>
+  </TypeDate>
+  <TypeDate>
+    <guid>b094406974cfd34ee8590521861eb5a6</guid>
+    <fileName>Assets/UnitySweeper/Editor/ClassReferenceCollection.cs</fileName>
+    <timeStamp>2022-12-13T19:37:40+01:00</timeStamp>
+    <typeFullName>
+      <string>UnitySweeper.ClassReferenceCollection</string>
+    </typeFullName>
+    <assembly>Assembly-CSharp-Editor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null</assembly>
+  </TypeDate>
+  <TypeDate>
+    <guid>931b3aede61b775dba0bf1341494af6f</guid>
+    <fileName>Assets/UnitySweeper/Editor/CollectionData.cs</fileName>
+    <timeStamp>2022-12-13T19:37:40+01:00</timeStamp>
+    <typeFullName>
+      <string>UnitySweeper.CollectionData</string>
+      <string>UnitySweeper.TypeDate</string>
+      <string>UnitySweeper.IReferenceCollection</string>
+    </typeFullName>
+    <assembly>Assembly-CSharp-Editor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null</assembly>
+  </TypeDate>
+  <TypeDate>
+    <guid>ed4031533df378d50a441a3e419a537c</guid>
+    <fileName>Assets/UnitySweeper/Editor/FindUnusedAssetsWindow.cs</fileName>
+    <timeStamp>2022-12-13T19:37:40+01:00</timeStamp>
+    <typeFullName>
+      <string>UnitySweeper.FindUnusedAssetsWindow</string>
+    </typeFullName>
+    <assembly>Assembly-CSharp-Editor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null</assembly>
+  </TypeDate>
+  <TypeDate>
+    <guid>8d07daa69f3a0be0b846bd7edec0ccd8</guid>
+    <fileName>Assets/UnitySweeper/Editor/ShaderReferenceCollection.cs</fileName>
+    <timeStamp>2022-12-13T19:37:40+01:00</timeStamp>
+    <typeFullName>
+      <string>UnitySweeper.ShaderReferenceCollection</string>
+    </typeFullName>
+    <assembly>Assembly-CSharp-Editor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null</assembly>
+  </TypeDate>
+</ArrayOfTypeDate>

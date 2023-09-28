@@ -1,11 +1,41 @@
+using System;
+using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.XR.Management;
 
 /// <summary>
 ///     Manages scene transitions and updates global game state.
 /// </summary>
 public class SceneController : MonoBehaviour
 {
+    IEnumerator StartXR(string scene)
+    {
+        yield return XRGeneralSettings.Instance.Manager.InitializeLoader();
+        if (XRGeneralSettings.Instance.Manager.activeLoader == null)
+        {
+            Debug.LogError("Initializing XR Failed. Check Editor or Player log for details.");
+        }
+        else
+        {
+            Debug.Log("Starting XR...");
+            XRGeneralSettings.Instance.Manager.StartSubsystems();
+            yield return null;
+            
+            SceneManager.LoadScene(scene, LoadSceneMode.Single);
+        }
+    }
+ 
+    void StopXR()
+    {
+        if (XRGeneralSettings.Instance.Manager.isInitializationComplete)
+        {
+            XRGeneralSettings.Instance.Manager.StopSubsystems();
+            Camera.main.ResetAspect();
+            XRGeneralSettings.Instance.Manager.DeinitializeLoader();
+        }
+    }
+    
     /// <summary>
     ///     Switches to the AR Scene and updates the selected prefab in the global game state.
     /// </summary>
@@ -16,7 +46,8 @@ public class SceneController : MonoBehaviour
         GameState.selectedPrefab = selectedPrefab;
 
         // Proceed to mode selection menu
-        SceneManager.LoadScene("Home Screen Mode Selection", LoadSceneMode.Single);
+        StopXR();
+        StartCoroutine(StartXR("Home Screen Mode Selection"));
     }
 
     public void SwitchSceneToAR(string selectedMode)
@@ -25,6 +56,11 @@ public class SceneController : MonoBehaviour
         GameState.modeSelected = selectedMode;
 
         // Proceed to AR mode.
-        SceneManager.LoadScene(selectedMode.Equals("Marker") ? "AR Scene Marker" : "AR Scene Plane", LoadSceneMode.Single);
+        XRGeneralSettings.Instance.Manager.StopSubsystems();
+        XRGeneralSettings.Instance.Manager.DeinitializeLoader();
+        XRGeneralSettings.Instance.Manager.InitializeLoaderSync();
+        string scene = selectedMode.Equals("Marker") ? "AR Scene Marker" : "AR Scene Plane";
+        StopXR();
+        StartCoroutine(StartXR(scene));
     }
 }
